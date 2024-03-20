@@ -1,1 +1,1 @@
-DashBoard project
+A bulletin board project
