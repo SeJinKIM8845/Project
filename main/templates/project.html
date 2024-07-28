@@ -1,0 +1,613 @@
+{% extends "main.html" %}
+{% block contents %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>고령군</title>
+    <link href='https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Atic+Atac&display=swap" rel="stylesheet">
+</head>
+<style>
+    /* Globals  */
+*{
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    list-style: none;
+    text-decoration: none;
+}
+
+/* Variables  */
+:root{
+    --color_Blue: #3f93f1;
+    --color_Dark1: #1e1e1e;
+    --color_Dark2: #252527;
+    --color_Light1: #dfdfdf;
+    --color_Light2: #c4c4c4;
+}
+
+/* =============== Sidebar =============== */
+.sidebar{
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 260px;
+    background-color: var(--color_Dark1);
+    transition: all .5s ease;
+    z-index: 1000;
+}
+.sidebar-list li:hover{
+    background-color: var(--color_Dark2);
+}
+/* --------- Logo ------------ */
+.logo-box{
+    height: 80px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    color: var(--color_Light1);
+    transition: all .5s ease;
+    margin-left: 10%;
+    margin-top: 10%;
+}
+.logo-box:hover{
+    color: var(--color_Blue);
+}
+
+.logo-box i{
+    font-size: 30px;
+    height: 50px;
+    min-width: 78px;
+    text-align: center;
+    line-height: 50px;
+    transition: all .5s ease;
+}
+.sidebar.close .logo-box i{
+    transform: rotate(360deg);
+}
+.logo-name{
+    font-size: 22px;
+    font-weight: 600;
+}
+
+/* ---------- Sidebar List ---------- */
+.sidebar-list{
+    height: 100%;
+    padding: 30px 0 150px 0;
+}
+
+.sidebar-list li .title{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all .5s ease;
+    cursor: pointer;
+}
+
+.sidebar-list li .title i{
+    height: 50px;
+    min-width: 78px;
+    text-align: center;
+    line-height: 50px;
+    color: var(--color_Light1);
+    font-size: 20px;
+}
+.sidebar-list li .title .name{
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--color_Light1);
+}
+
+/* ---------------- Submenu ------------- */
+.sidebar-list li .submenu{
+    width: 100vw;
+    height: 20%;
+    opacity: 0;
+    transition: all .5s ease;
+    z-index: 1000;
+    position: absolute; /* fixed -> absolute로 변경 */
+    right: 100%; /* 수정된 부분: 왼쪽에 위치하도록 변경 */
+}
+
+.sidebar-list li.dropdown.active .submenu{
+    left: 100%; /* 수정된 부분: right -> left로 변경 */
+    opacity: 1;
+    background-color: white;
+    display: flex;
+    padding: 6px 6px 14px 80px;
+    pointer-events: initial;
+    width: 60vw;
+    height: 50vh;
+    overflow: auto;
+}
+
+.submenu .link{
+    color: var(--color_Dark2);
+    font-size: 15px;
+    font-weight: bold;
+    padding: 10px 30px;
+    transition: all .5s ease;
+    margin-right: 50px;
+    display: inline-block;
+    
+}
+
+.submenu .link .item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.submenu .link .item img {
+    width: 150px;
+    height: 100px;
+    order: 2; /* 이미지를 아래로 내리기 위해 순서를 조정합니다 */
+}
+
+.submenu .link .item span {
+    margin-bottom: 5px; /* 이미지와 텍스트 간격 조절 */
+    order: 1; /* 텍스트를 이미지 위로 올리기 위해 순서를 조정합니다 */
+}
+
+.submenu .link:hover{
+    color: var(--color_Light1); /* 텍스트 색상 변경 */
+}
+
+.submenu-title{
+    display: none;
+}
+
+
+.home{
+    position: absolute;
+    background-color: var(--color_Light1);
+    left: 260px;
+    width: calc(100% - 260px);
+    height: 100vh;
+}
+
+#map {
+    z-index: 1;
+  }
+
+.link:hover{
+    background-color: var(--color_Dark2);
+}
+.link.active {
+    background-color: var(--color_Blue);
+}
+
+/* ============ Responsive / Breakpoints ========== */
+@media (max-width: 1080px){
+    
+}
+
+/* For Medium Devices */
+@media (max-width: 774px){
+   
+}
+@media (max-width: 560px){
+    
+}
+
+/* For Small Devices */
+@media (max-width: 360px){
+   
+}
+/* 모달 스타일 */
+.modal {
+    display: none; /* 모달 초기에는 숨김 상태 */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* 배경에 어둡게 */
+    overflow: auto;
+}
+
+/* 모달 내용 */
+.modal-content {
+    position: relative;
+    top: 0;
+    padding: 20px;
+    background: #fff;
+    width: 80%;
+    max-width: 100vw;
+    height: 100vh;
+}
+
+/* 모달 닫기 버튼 */
+.close {
+    color: #ccc;
+    float: right;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  /* 테이블 헤더 스타일 */
+  thead th {
+    background-color: #f2f2f2; /* 헤더 배경색 */
+    color: #333; /* 헤더 글자 색상 */
+    padding: 10px;
+    border: 1px solid #ddd; /* 경계선 색상 */
+    text-align: left;
+  }
+  
+  /* 테이블 바디 스타일 */
+  tbody td {
+    padding: 10px;
+    border: 1px solid #ddd;
+  }
+  
+  /* 버튼 스타일 */
+  .button {
+    display: inline-block;
+    background-color: #4CAF50;
+    color: white;
+    padding: 5px 10px;
+    text-decoration: none;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  /* 버튼 호버 효과 */
+  button:hover {
+    background-color: #45a049;
+  }
+  
+  /* 홀수 줄 스타일 */
+  tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+  }
+  
+  /* 짝수 줄 스타일 */
+  tbody tr:nth-child(even) {
+    background-color: #ffffff;
+  }
+
+  .button.active {
+    background-color: #3498db;
+    color: #fff;
+  }
+.row{
+    display: flex;
+  }
+  .cols {
+    flex:10%;
+    height: 100vh;
+  }
+
+  #map {
+    z-index: 1;
+  }
+
+  .sidebar-footer {
+    padding: 10px;
+    background: #333; /* 배경 색상, 기존 사이드바와 맞추세요 */
+    color: white; /* 텍스트 색상 */
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+
+.home-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none; /* 링크의 밑줄 제거 */
+}
+</style>
+<body>
+    <div class="sidebar">
+        <a href="main.html" class="logo-box">
+            <div class="logo-name"><img src="../lmg/logo.png">고령군</div>
+        </a>
+        <ul class="sidebar-list">
+            <li class="dropdown">
+                <div class="title">
+                    <a href="#" class="">
+                        <i class='bx bx-collection'></i>
+                        <span class="name">영상목록</span>
+                    </a>
+                    <i class='bx bxs-chevron-down'></i>
+                </div>
+                <div class="submenu">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>이름</th>
+                                <th>지역</th>
+                                <th>날짜</th>
+                                <th>상세</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 테이블 데이터가 들어갈 곳 -->
+                            <!-- 예시 데이터 -->
+                            <tr>
+                                <td>1</td>
+                                <td>고령군</td>
+                                <td>고령 지산동 고분군</td>
+                                <td>2023-06-28</td>
+                                <td><a href="#" class="button" onclick="toggleLayer('2023-06-28')">상세보기</a></td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>고령군</td>
+                                <td>고령 지산동 고분군</td>
+                                <td>2023-07-17</td>
+                                <td><a href="#" class="button" onclick="toggleLayer('2023-08-02')">상세보기</a></td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>고령군</td>
+                                <td>고령 지산동 고분군</td>
+                                <td>2023-08-27</td>
+                                <td><a href="#" class="button" onclick="toggleLayer('2023-08-27')">상세보기</a></td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td>고령군</td>
+                                <td>고령 지산동 고분군</td>
+                                <td>2023-09-22</td>
+                                <td><a href="#" class="button" onclick="toggleLayer('2023-09-22')">상세보기</a></td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td>고령군</td>
+                                <td>고령 지산동 고분군</td>
+                                <td>2023-10-25</td>
+                                <td><a href="#" class="button" onclick="toggleLayer('2023-10-25')">상세보기</a></td>
+                            </tr>
+                            <tr>
+                                <td>6</td>
+                                <td>고령군</td>
+                                <td>고령 지산동 고분군</td>
+                                <td>2023-11-21</td>
+                                <td><a href="#" class="button" onclick="toggleLayer('2023-11-21')">상세보기</a></td>
+                            </tr>
+                            <tr>
+                                <td>7</td>
+                                <td>고령군</td>
+                                <td>고령 지산동 고분군</td>
+                                <td>2023-12-06</td>
+                                <td><a href="#" class="button" onclick="toggleLayer('2023-12-06')">상세보기</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </li>
+
+            <li class="dropdown">
+                <div class="title">
+                    <a href="#" class="">
+                        <i class='bx bx-line-chart'></i>
+                        <span class="name">다분광데이터</span>
+                    </a>
+                    <i class='bx bxs-chevron-down'></i>
+                </div>
+                <div class="submenu">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>이름</th>
+                                <th>지역</th>
+                                <th>정보</th>
+                                <th>상세</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 테이블 데이터가 들어갈 곳 -->
+                            <!-- 예시 데이터 -->
+                            <tr>
+                                <td>1</td>
+                                <td>고령군</td>
+                                <td>고령 지산동 고분군</td>
+                                <td>분광데이터</td>
+                                <td><a href="#" class="button" onclick="toggleLayer('분광1')">상세보기</a></td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>고령군</td>
+                                <td>고령 지산동 고분군</td>
+                                <td>분광데이터</td>
+                                <td><a href="#" class="button" onclick="toggleLayer('분광2')">상세보기</a></td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>고령군</td>
+                                <td>고령 지산동 고분군</td>
+                                <td>분광데이터</td>
+                                <td><a href="#" class="button" onclick="toggleLayer('분광3')">상세보기</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </li>
+            <!-- -------- Dropdown List Item ------- -->
+            <li class="dropdown">
+                <div class="title">
+                    <a href="#" class="">
+                        <i class='bx bx-book-alt'></i>
+                        <span class="name">점검 결과 보고</span>
+                    </a>
+                    <i class='bx bxs-chevron-down'></i>
+                </div>
+                <div class="submenu">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>이름</th>
+                                <th>정보</th>
+                                <th>파일</th>
+                                <th>상세</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 테이블 데이터가 들어갈 곳 -->
+                            <!-- 예시 데이터 -->
+                            <tr>
+                                <td>1</td>
+                                <td>고령군</td>
+                                <td>6월 점검 보고</td>
+                                <td>pdf파일</td>
+                                <td><a href="#" class="button" onclick="openPDFModal('../pdf(고령)/6월 점검 보고.pdf')">상세보기</a></td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>고령군</td>
+                                <td>7월 점검 보고</td>
+                                <td>pdf파일</td>
+                                <td><a href="#" class="button" onclick="openPDFModal('../pdf(고령)/7월 점검 보고.pdf')">상세보기</a></td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>고령군</td>
+                                <td>8월 점검 보고</td>
+                                <td>pdf파일</td>
+                                <td><a href="#" class="button" onclick="openPDFModal('../pdf(고령)/8월 점검 보고.pdf')">상세보기</a></td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td>고령군</td>
+                                <td>9월 점검 보고</td>
+                                <td>pdf파일</td>
+                                <td><a href="#" class="button" onclick="openPDFModal('../pdf(고령)/9월 점검 보고.pdf')">상세보기</a></td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td>고령군</td>
+                                <td>10월 점검 보고</td>
+                                <td>pdf파일</td>
+                                <td><a href="#" class="button" onclick="openPDFModal('../pdf(고령)/10월 점검 보고.pdf')">상세보기</a></td>
+                            </tr>
+                            <tr>
+                                <td>6</td>
+                                <td>고령군</td>
+                                <td>11월 점검 보고</td>
+                                <td>pdf파일</td>
+                                <td><a href="#" class="button" onclick="openPDFModal('../pdf(고령)/11월 점검 보고.pdf')">상세보기</a></td>
+                            </tr>
+                            <tr>
+                                <td>7</td>
+                                <td>고령군</td>
+                                <td>12월 점검 보고</td>
+                                <td>pdf파일</td>
+                                <td><a href="#" class="button" onclick="openPDFModal('../pdf(고령)/12월 점검 보고.pdf')">상세보기</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </li>
+
+            <li class="dropdown">
+                <div class="title">
+                    <a href="3D.html" class="">
+                        <i class='bx bx-cube'></i>
+                        <span class="name">3D 데이터</span>
+                    </a>
+                </div>
+            </li>
+
+            <li class="dropdown">
+                <div class="title">
+                    <a href="goryeong.html" class="">
+                        <i class='bx bx-extension'></i>
+                        <span class="name">동시분석 비교모드</span>
+                    </a>
+                </div>
+            </li>
+
+            <li>
+                <div class="title">
+                    <a href="#" class="">
+                        <i class='bx bx-cog'></i>
+                        <span class="name">시스템소개</span>
+                    </a>
+                    <!-- <i class='bx bxs-chevron-down'></i> -->
+                </div>
+                <div class="submenu">
+                    <a href="sys.html" class="link submenu-title">시스템소개</a>
+                </div>
+            </li>
+            <li>
+                <div class="sidebar-footer">
+                    <a href="../index.html" class="home-link">
+                        <i class='bx bx-home' style="color: white;"></i> <!-- 아이콘 클래스는 상황에 맞게 변경 가능 -->
+                        <span class="name" style="color: white;"></span>
+                    </a>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <div id="pdfModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <div class="modal-content">
+            <embed id="pdfEmbed" src="" type="application/pdf" width="100%" height="100%">
+        </div>
+    </div>
+    <div style="position: absolute; top: 10px; right: 10px; z-index: 100;">
+        <img src="../lmg/osm.png" alt="OSM" style="border-radius: 50%; width: 100px; height: 100px; cursor: pointer;" onclick="toggleBaseLayer('osm')" />
+        <img src="../lmg/google.png" alt="Google Map" style="border-radius: 50%; width: 100px; height: 100px; cursor: pointer;" onclick="toggleBaseLayer('googlemap')" />
+    </div>
+    <section class="home" id="map">
+        <div class="toggle-sidebar">
+            <i class='bx bx-menu'></i>
+            <div class="text"></div>
+        </div>
+    </section>
+    <!-- Link JS -->
+    <script src="../js/main.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="../lib/leaflet-side-by-side.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="../js/sidemap.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+<script>
+    // 모달 열기
+function openPDFModal(pdfSrc) {
+    var modal = document.getElementById('pdfModal');
+    var pdfEmbed = document.getElementById('pdfEmbed');
+    pdfEmbed.src = pdfSrc; // 클릭된 PDF 파일의 경로를 embed 요소에 설정
+    modal.style.display = 'block';
+}
+
+// 모달 닫기
+function closeModal() {
+    var modal = document.getElementById('pdfModal');
+    modal.style.display = 'none';
+}
+
+</script>
+</html>
+
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "main.html" %}
+{% block contents %}
+<script>
+$.get("{{url_for('board.test')}}").done(function(data) {
+    $("#ddd").html(data);
+}).fail(function(data) {
+    alert(data);
+})
+</script>
+
+<div id="ddd"></div>
+{% endblock %}
